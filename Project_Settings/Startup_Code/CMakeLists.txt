@@ -38,5 +38,5 @@ add_library(startup STATIC
 #   (即 ~/s32k144),用它是为了不受从哪个目录进入构建的影响。
 # ----------------------------------------------------------------------------
 target_include_directories(startup
-    INTERFACE ${PROJECT_SOURCE_DIR}/include
+    PUBLIC ${PROJECT_SOURCE_DIR}/include
 )
