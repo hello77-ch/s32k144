@@ -14,14 +14,14 @@
 add_executable(s32k144.elf main.c)
 
 # ----------------------------------------------------------------------------
-# 链接启动代码库
-#   这一行同时完成两件事:
-#   1. 链接 startup 库(向量表、Reset_Handler 从这里进来);
-#   2. 顺带获得 startup INTERFACE 传播出来的 include/ 头文件路径,
-#      所以 main.c 能找到 device_registers.h——应用层无需任何
-#      include_directories()。
+# 链接启动代码库 + FreeRTOS 内核
+#   链接 startup:拿到向量表、Reset_Handler,以及 INTERFACE 传播的
+#   include/ 路径(main.c 由此找到 device_registers.h)。
+#   链接 freertos_kernel:拿到内核静态库;FreeRTOS.h/task.h 的内核路径
+#   和 FreeRTOSConfig.h 的路径(freertos_config)会经 PUBLIC 链自动
+#   传播过来,应用层无需任何 include_directories()。
 # ----------------------------------------------------------------------------
-target_link_libraries(s32k144.elf PRIVATE startup)
+target_link_libraries(s32k144.elf PRIVATE startup freertos_kernel)
 
 # ----------------------------------------------------------------------------
 # 选择链接脚本:描述 Flash/RAM 的地址和容量,指挥代码数据怎么摆放

@@ -134,6 +134,37 @@ add_link_options(
 #         必须先加它,后面 src 层才能链接到这个库。
 add_subdirectory(Project_Settings/Startup_Code)
 
+# ============================================================================
+#  FreeRTOS 内核层(使用内核自带的官方 CMakeLists.txt)
+# ----------------------------------------------------------------------------
+#  源码直接引用工程内已下载的 FreeRTOS-LTS,不复制文件。
+#  内核的 CMake 有两个约定,由调用方(本文件)负责:
+#    1. 提供变量 FREERTOS_PORT / FREERTOS_HEAP;
+#    2. 把 FreeRTOSConfig.h 所在目录包成名为 freertos_config 的接口库。
+# ============================================================================
+
+# 移植层:S32K144 是带 FPU 的 Cortex-M4 → GCC(编译器)_ARM_CM4F(内核)。
+# ★ 必须显式指定:不设的话在 Windows/MinGW 环境下会被内核自动识别成
+#   MSVC_MINGW(PC 本机端口),交叉编译直接乱套。
+#   (CACHE 变量:命令行可用 -DFREERTOS_PORT=xxx 覆盖)
+set(FREERTOS_PORT GCC_ARM_CM4F CACHE STRING "FreeRTOS port")
+
+# 堆管理方案:4 = 可释放 + 相邻空闲块合并(portable/MemMang/heap_4.c)。
+# 不设的话内核不编任何堆文件,链接时报 pvPortMalloc 未定义。
+set(FREERTOS_HEAP 4 CACHE STRING "FreeRTOS heap impl")
+
+# 官方约定:配置文件目录包成 freertos_config 接口库。
+# INTERFACE 库 = 零源文件、不产 .a 的"配置载体",只把头文件路径
+# 传播给链接它的人;内核编 tasks.c 和我们编 main.c 都靠它
+# 才能找到 FreeRTOSConfig.h。
+add_library(freertos_config INTERFACE)
+target_include_directories(freertos_config
+    INTERFACE ${PROJECT_SOURCE_DIR}/FreeRTOS)
+
+# 第二个参数给子目录指定构建产物目录名,
+# 避免在 FreeRTOS-LTS 源码树(带 .git)里生成任何文件。
+add_subdirectory(FreeRTOS-LTS/FreeRTOS/FreeRTOS-Kernel FreeRTOS-Kernel)
+
 # 应用层:定义最终固件 s32k144.elf,链接 startup,挂链接脚本,
 #         链接后自动生成 hex/bin 并打印体积。
 add_subdirectory(src)
